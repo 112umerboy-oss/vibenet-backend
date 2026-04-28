@@ -1,61 +1,50 @@
 const express = require('express');
 const cors = require('cors');
-const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Claude
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY
-});
-
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'online', message: 'VibeNet AI Ready!' });
-});
-
-// AI Matching endpoint
-app.post('/api/find-matches', async (req, res) => {
-  const { interests } = req.body;
-  
-  try {
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 500,
-      messages: [{
-        role: 'user',
-        content: `Generate 3 fun Gen Z friend matches for someone who likes: ${interests?.join(', ') || 'music and gaming'}. 
-        Return JSON only: [{"username":"name","match":95,"reason":"why they match"}]`
-      }]
-    });
-    
-    let text = response.content[0].text;
-    text = text.replace(/```json|```/g, '');
-    const matches = JSON.parse(text);
-    
-    res.json({ success: true, matches });
-  } catch (error) {
-    res.json({ 
-      success: true, 
-      matches: [
-        { username: "vibewave", match: 94, reason: "Similar music taste!" },
-        { username: "aurareader", match: 88, reason: "Deep convos!" }
-      ]
-    });
-  }
+  res.json({ status: 'online', message: 'VibeNet API Running!' });
 });
 
 // Login endpoint
-app.post('/api/login', (req, res) => {
-  res.json({ success: true, user: { id: 1, email: req.body.email } });
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  res.json({ 
+    success: true, 
+    user: { id: Date.now(), email, username: email.split('@')[0] }
+  });
 });
 
 // Register endpoint
-app.post('/api/register', (req, res) => {
-  res.json({ success: true, user: { id: 1, email: req.body.email } });
+app.post('/api/register', async (req, res) => {
+  const { email, password, username, interests } = req.body;
+  res.json({ 
+    success: true, 
+    user: { id: Date.now(), email, username: username || email.split('@')[0] }
+  });
+});
+
+// AI Matching endpoint (will work when Claude key is added)
+app.post('/api/find-matches', async (req, res) => {
+  const { interests } = req.body;
+  
+  // Return demo matches for now
+  res.json({ 
+    success: true, 
+    matches: [
+      { username: "vibewave", matchPercentage: 94, reason: "Similar music taste! 🎵", conversationStarter: "Hey! Your vibe is immaculate 🔥" },
+      { username: "aurareader", matchPercentage: 88, reason: "Deep conversations 💭", conversationStarter: "Love your perspective!" },
+      { username: "midnightcreator", matchPercentage: 82, reason: "Creative souls 🎨", conversationStarter: "Your energy is everything!" },
+      { username: "chillvibes", matchPercentage: 79, reason: "Same laid-back energy ✨", conversationStarter: "Finally someone who gets it!" }
+    ]
+  });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ VibeNet backend running on port ${PORT}`);
+});
